@@ -34,14 +34,14 @@ ncSpatialAvg3 = [ncsourcedir, 'spatially_averaged/', 'kaufman.data.future.delta.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Apply deltas from the ROMS climate scenario outputs %%%%%
 
-% deltasToApply = '2050';
+deltasToApply = '2050';
 % deltasToApply = '2100';
-deltasToApply = 'none';
+% deltasToApply = 'none';
 
-deltaSite = 'A';  % A: 77.2S  169.5E
+% deltaSite = 'A';  % A: 77.2S  169.5E
 % deltaSite = 'B';  % B: 76.5S  176E
 % deltaSite = 'spatialAvg1';  % 1:  167 - 173 E  ;  77.5 - 76.6 S
-% deltaSite = 'spatialAvg2';  % 2:  166 - 174 E  ;  77.5 - 76 S
+deltaSite = 'spatialAvg2';  % 2:  166 - 174 E  ;  77.5 - 76 S
 % deltaSite = 'spatialAvg3';  % 3:  164 - 176 E  ;  78 - 75 S
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
