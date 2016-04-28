@@ -1,5 +1,5 @@
 function [ outtable,newmmtable ] = limit_solrad_byice_wROMSiceDeltas( datesq )
-%LIMIT_SOLRAD_BYICE Summary of this function goes here
+%LIMIT_SOLRAD_BYICE_WROMSICEDELTAS Summary of this function goes here
 %
 % use output tables from:
 % [ solradtable, dailytable ] = era_sol_20151026( filename, latq, lonq )
@@ -7,12 +7,13 @@ function [ outtable,newmmtable ] = limit_solrad_byice_wROMSiceDeltas( datesq )
 % dateicetable = ice_timeseries()
 %
 %   MFILE:   limit_solrad_byice.m
-%   MATLAB:  8.6.0.267246 (R2015b)
+%   MATLAB:  9.0.0.341360 (R2016a)
 %   AUTHOR:  Daniel Edward Kaufman (USA)
 %            @ The Virginia Institute of Marine Science
 %   CONTACT: dkauf42@gmail.com
-%   LATEST_UPDATE: October, 2015
+%   LATEST_UPDATE: April, 2016
 %   REVISION HISTORY:
+%   - Added ROMS ice deltas (Apr. 2016)
 %   - Initial Generation (Oct. 2015)
 %
 
@@ -24,16 +25,24 @@ function [ outtable,newmmtable ] = limit_solrad_byice_wROMSiceDeltas( datesq )
 ncsourcedir = '~/Desktop/CATEGORIES/CAREER_MANAGEMENT/VIMS/Dissertation/Chapter_2_ForwardModel/climate_scenarios_roms_outputs/';
 ncA = [ncsourcedir, 'kaufman.data.future.delta.A.nc'];  iA = ncinfo(ncA);
 ncB = [ncsourcedir, 'kaufman.data.future.delta.B.nc'];  iB = ncinfo(ncB);
+ncSpatialAvg1 = [ncsourcedir, 'spatially_averaged/', 'kaufman.data.future.delta.area1.nc'];  iSA1 = ncinfo(ncSpatialAvg1);
+ncSpatialAvg2 = [ncsourcedir, 'spatially_averaged/', 'kaufman.data.future.delta.area2.nc'];  iSA2 = ncinfo(ncSpatialAvg2);
+ncSpatialAvg3 = [ncsourcedir, 'spatially_averaged/', 'kaufman.data.future.delta.area3.nc'];  iSA3 = ncinfo(ncSpatialAvg3);
 
 %%%%%%%%%% COMMON TWEAKS %%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Apply deltas from the ROMS climate scenario outputs %%%%%
+
 % deltasToApply = '2050';
 % deltasToApply = '2100';
 deltasToApply = 'none';
+
 deltaSite = 'A';  % A: 77.2S  169.5E
 % deltaSite = 'B';  % B: 76.5S  176E
+% deltaSite = 'spatialAvg1';  % 1:  167 - 173 E  ;  77.5 - 76.6 S
+% deltaSite = 'spatialAvg2';  % 2:  166 - 174 E  ;  77.5 - 76 S
+% deltaSite = 'spatialAvg3';  % 3:  164 - 176 E  ;  78 - 75 S
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% Reduce Ice Coverage by a Percentage: %%%%%
@@ -87,40 +96,42 @@ end
 
 %% Get Ice Coverage Deltas for each day from the ROMS scenario outputs
 
+switch deltaSite
+    case 'A'
+        ncROMSclimateFile = ncA;
+    case 'B'
+        ncROMSclimateFile = ncB;
+    case 'spatialAvg1'
+        ncROMSclimateFile = ncSpatialAvg1;
+    case 'spatialAvg2'
+        ncROMSclimateFile = ncSpatialAvg2;
+    case 'spatialAvg3'
+        ncROMSclimateFile = ncSpatialAvg3;
+end
+
 % Time    % days since Sep. 15, 2012, in 5 day increments
-timeA = double( ncread(ncA,'time') );
-timeB = double( ncread(ncB,'time') );
+nctime = double( ncread(ncROMSclimateFile,'time') );
+
 % AICE: sea ice cover fraction difference
 % 73 x 1 single
-ice_A2050 = double( ncread(ncA,'aice_2050') );
-ice_A2100 = double( ncread(ncA,'aice_2100') );
-ice_B2050 = double( ncread(ncB,'aice_2050') );
-ice_B2100 = double( ncread(ncB,'aice_2100') );
+ice_2050 = double( ncread(ncA,'aice_2050') );
+ice_2100 = double( ncread(ncA,'aice_2100') );
 
 % Convert ROMS days (from Sep.15,2012) to days-of-year
-doyA = date2doy( datenum('Sep 15 2012') + timeA );
-doyB = date2doy( datenum('Sep 15 2012') + timeB );
+ncdoy = date2doy( datenum('Sep 15 2012') + nctime );
 
 % Determine where the year splits
 firsttimestepofnewyear = 23;
 lasttimestepoffirstyear = 22;
 
-ice_dV_A2050 = [ ones(1,5) .* ice_A2050(1),...
-                 interp1(doyA(1:lasttimestepoffirstyear), ice_A2050(1:lasttimestepoffirstyear), 262:365) ,...
-                 interp1([-4.5; 0.5; doyA(firsttimestepofnewyear:end)], ice_A2050(21:end), 1:255),...
-                 ice_A2050(end) ];
-ice_dV_A2100 = [ ones(1,5) .* ice_A2100(1),...
-                 interp1(doyA(1:lasttimestepoffirstyear), ice_A2100(1:lasttimestepoffirstyear), 262:365) ,...
-                 interp1([-4.5; 0.5; doyA(firsttimestepofnewyear:end)], ice_A2100(21:end), 1:255),...
-                 ice_A2100(end) ];
-ice_dV_B2050 = [ ones(1,5) .* ice_B2050(1),...
-                 interp1(doyB(1:lasttimestepoffirstyear), ice_B2050(1:lasttimestepoffirstyear), 262:365) ,...
-                 interp1([-4.5; 0.5; doyB(firsttimestepofnewyear:end)], ice_B2050(21:end), 1:255),...
-                 ice_B2050(end) ];
-ice_dV_B2100 = [ ones(1,5) .* ice_B2100(1),...
-                 interp1(doyB(1:lasttimestepoffirstyear), ice_B2100(1:lasttimestepoffirstyear), 262:365) ,...
-                 interp1([-4.5; 0.5; doyB(firsttimestepofnewyear:end)], ice_B2100(21:end), 1:255),...
-                 ice_B2100(end) ];
+ice_dV_2050 = [ ones(1,5) .* ice_2050(1),...
+                 interp1(ncdoy(1:lasttimestepoffirstyear), ice_2050(1:lasttimestepoffirstyear), 262:365) ,...
+                 interp1([-4.5; 0.5; ncdoy(firsttimestepofnewyear:end)], ice_2050(21:end), 1:255),...
+                 ice_2050(end) ];
+ice_dV_2100 = [ ones(1,5) .* ice_2100(1),...
+                 interp1(ncdoy(1:lasttimestepoffirstyear), ice_2100(1:lasttimestepoffirstyear), 262:365) ,...
+                 interp1([-4.5; 0.5; ncdoy(firsttimestepofnewyear:end)], ice_2100(21:end), 1:255),...
+                 ice_2100(end) ];
              
 days_ts = 257:621;
 days_ts_dates = doy2date(days_ts,repmat(2012,numel(days_ts),1));
@@ -128,23 +139,11 @@ days_ts( days_ts>365 ) = days_ts( days_ts>365 )-365;
 
 switch deltasToApply
     case '2050'
-        switch deltaSite
-            case 'A'
-                deltaIce_beforeSort = ice_dV_A2050(:);
+                deltaIce_beforeSort = ice_dV_2050(:);
                 DaysAndIce_deltas = sortrows( [ days_ts(:) deltaIce_beforeSort] );
-            case 'B'
-                deltaIce_beforeSort = ice_dV_B2050(:);
-                DaysAndIce_deltas = sortrows( [ days_ts(:) deltaIce_beforeSort] );
-        end
     case '2100'
-        switch deltaSite
-            case 'A'
-                deltaIce_beforeSort = ice_dV_A2100(:);
+                deltaIce_beforeSort = ice_dV_2100(:);
                 DaysAndIce_deltas = sortrows( [ days_ts(:) deltaIce_beforeSort] );
-            case 'B'
-                deltaIce_beforeSort = ice_dV_B2100(:);
-                DaysAndIce_deltas = sortrows( [ days_ts(:) deltaIce_beforeSort] );
-        end
     case 'none'
         deltaIce_beforeSort = zeros(365,1);
         DaysAndIce_deltas = [ days_ts(:) deltaIce_beforeSort];
